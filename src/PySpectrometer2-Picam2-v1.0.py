@@ -253,15 +253,13 @@ while True:
     
     raw_intensity = np.array(intensity, dtype=float)
 
-    if absorbance_mode:
+    if absorbance_mode and have_reference:
         with np.errstate(divide='ignore', invalid='ignore'):
-            intensity = np.log10(np.divide(reference_spectrum, np.where(raw_intensity == 0, 1e-10, raw_intensity)))
+            intensity = np.log10(np.divide(reference_spectrum, np.where(smoothed_intensity == 0, 1e-10, smoothed_intensity))) #Use smoothed_intensity for I and reference_spectrum for 10
             intensity = np.nan_to_num(intensity, nan=0.0, posinf=0.0, neginf=0.0)
-            intensity = intensity * 100
-            intensity = intensity.astype(int)
+
     else:
-        intensity = savitzky_golay(raw_intensity, 17, savpoly)
-        intensity = intensity.astype(int)
+        intensity = smoothed_intensity #Normal intensity display
         
     if dispWaterfall == True:
         #waterfall....
@@ -495,9 +493,10 @@ while True:
             picam2.set_controls({"AnalogueGain": picamGain})
             print("Camera Gain: "+str(picamGain))
     elif keyPress == ord("r"):#Save reference
-        reference_spectrum = np.array(intensity, dtype=float)
-        reference_spectrum[reference_spectrum == 0] = 1e-10
-        print("Reference spectrum saved")
+		reference_spectrum = smoothed_intensity.copy() #Save smoothed reference
+        reference_spectrum[reference_spectrum == 0] = 1e-10 #Avoid division by zero in future computations
+		have_reference = True
+        print("Smoothed reference spectrum saved")
     elif keyPress == ord("a"):#Toggle absorbance mode
         absorbance_mode = not absorbance_mode
         print("Absorbance mode:", "ON" if absorbance_mode else "OFF")                               
