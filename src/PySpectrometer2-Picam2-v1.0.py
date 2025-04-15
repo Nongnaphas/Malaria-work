@@ -121,6 +121,7 @@ font=cv2.FONT_HERSHEY_SIMPLEX
 intensity = [0] * frameWidth #array for intensity data...full of zeroes
 
 absorbance_mode = False
+have_reference = False 
 reference_spectrum = np.ones(frameWidth, dtype=float) #Prevents divide-by-zeo by initialized to ones
 
 holdpeaks = False #are we holding peaks?
@@ -252,6 +253,8 @@ while True:
             intensity[i] = data
     
     raw_intensity = np.array(intensity, dtype=float)
+	smoothed_intensity = savitzky_golay(raw_intensity, 17, savpoly)
+	smoothed_intensity = np.array(smoothed_intensity).astype(int)
 
     if absorbance_mode and have_reference:
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -291,7 +294,7 @@ while True:
     #first filter if not holding peaks!
     
     if holdpeaks == False:
-        intensity = savitzky_golay(intensity,17,savpoly)
+
         intensity = np.array(intensity)
         intensity = intensity.astype(int)
         holdmsg = "Holdpeaks OFF" 
@@ -493,13 +496,13 @@ while True:
             picam2.set_controls({"AnalogueGain": picamGain})
             print("Camera Gain: "+str(picamGain))
     elif keyPress == ord("r"):#Save reference
-		reference_spectrum = smoothed_intensity.copy() #Save smoothed reference
-        reference_spectrum[reference_spectrum == 0] = 1e-10 #Avoid division by zero in future computations
-		have_reference = True
-        print("Smoothed reference spectrum saved")
+			reference_spectrum = smoothed_intensity.copy() #Save smoothed reference
+        	reference_spectrum[reference_spectrum == 0] = 1e-10 #Avoid division by zero in future computations
+			have_reference = True
+        	print("Smoothed reference spectrum saved")
     elif keyPress == ord("a"):#Toggle absorbance mode
-        absorbance_mode = not absorbance_mode
-        print("Absorbance mode:", "ON" if absorbance_mode else "OFF")                               
+        	absorbance_mode = not absorbance_mode
+        	print("Absorbance mode:", "ON" if absorbance_mode else "OFF")                               
                 
 
 
